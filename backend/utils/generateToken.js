@@ -18,6 +18,7 @@ const generateToken = (res, customerId) => {
     secure: process.env.NODE_ENV === 'production', // Send over HTTPS in production
     sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax', // CSRF protection
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in milliseconds
+    path: '/',
   });
 
   return token;

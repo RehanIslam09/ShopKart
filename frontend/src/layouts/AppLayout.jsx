@@ -1,32 +1,59 @@
-import { useState, useEffect } from 'react';
+import { useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useOutletContext } from 'react-router-dom';
 import { ShoppingBag, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
-import { logoutCustomer, getWishlist } from '../services/api';
+import gsap from 'gsap';
+import { logoutCustomer } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { WishlistProvider, useWishlist } from '../context/WishlistContext';
 import GlassButton from '../components/ui/GlassButton';
+import UndoToast from '../components/ui/UndoToast';
 
 /**
- * App Layout for Authenticated Pages (/home, /products, /wishlist, /cart)
- * Uses the same design tokens, glassmorphism, and minimal Apple aesthetic.
+ * App Layout Content (Wrapped in WishlistProvider)
+ * Renders verified authenticated navigation, synchronized Wishlist and Cart badges with GSAP pops,
+ * user profile avatar, and the global UndoToast.
  */
-export default function AppLayout() {
+function AppLayoutContent() {
   const navigate = useNavigate();
   const outletContext = useOutletContext();
   const customer = outletContext?.customer;
-  const { totalItems } = useCart();
-  const [wishlistCount, setWishlistCount] = useState(0);
+
+  const { totalItems, clearCart } = useCart();
+  const { count: wishlistCount, clearWishlist } = useWishlist();
+
+  const wishlistBadgeRef = useRef(null);
+  const cartBadgeRef = useRef(null);
+  const isFirstWishlist = useRef(true);
+  const isFirstCart = useRef(true);
+
+  // GSAP badge pop animation on count changes (skip first render)
+  useEffect(() => {
+    if (isFirstWishlist.current) {
+      isFirstWishlist.current = false;
+      return;
+    }
+    if (wishlistBadgeRef.current && wishlistCount > 0) {
+      gsap.fromTo(
+        wishlistBadgeRef.current,
+        { scale: 1 },
+        { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1, ease: 'power2.out' }
+      );
+    }
+  }, [wishlistCount]);
 
   useEffect(() => {
-    getWishlist()
-      .then((data) => {
-        if (data && data.wishlist) {
-          setWishlistCount(data.wishlist.length);
-        }
-      })
-      .catch(() => {
-        setWishlistCount(0);
-      });
-  }, []);
+    if (isFirstCart.current) {
+      isFirstCart.current = false;
+      return;
+    }
+    if (cartBadgeRef.current && totalItems > 0) {
+      gsap.fromTo(
+        cartBadgeRef.current,
+        { scale: 1 },
+        { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1, ease: 'power2.out' }
+      );
+    }
+  }, [totalItems]);
 
   const handleLogout = async () => {
     try {
@@ -34,6 +61,8 @@ export default function AppLayout() {
     } catch (err) {
       console.error('Logout error:', err);
     } finally {
+      clearWishlist();
+      clearCart();
       navigate('/login');
     }
   };
@@ -44,6 +73,9 @@ export default function AppLayout() {
         ? 'bg-primary text-bg font-semibold shadow-sm'
         : 'text-muted hover:text-primary hover:bg-glass/[0.06]'
     }`;
+
+  const displayWishlist = wishlistCount > 9 ? '9+' : wishlistCount;
+  const displayCart = totalItems > 9 ? '9+' : totalItems;
 
   return (
     <div className="min-h-screen flex flex-col justify-between bg-bg text-primary">
@@ -63,7 +95,7 @@ export default function AppLayout() {
             </span>
           </Link>
 
-          {/* Navigation Links */}
+          {/* Navigation Links with Centralized Counter Badges */}
           <div className="flex items-center gap-1 bg-glass/[0.03] p-1 rounded-full border border-glass-border/[0.06]">
             <NavLink to="/home" className={navLinkStyle}>
               Home
@@ -75,8 +107,11 @@ export default function AppLayout() {
               <Heart className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Wishlist</span>
               {wishlistCount > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-danger/20 text-danger border border-danger/30 text-[10px] font-semibold">
-                  {wishlistCount}
+                <span
+                  ref={wishlistBadgeRef}
+                  className="px-1.5 py-0.5 rounded-full bg-rose-500/20 text-rose-300 border border-rose-500/30 text-[10px] font-semibold tracking-tight leading-none"
+                >
+                  {displayWishlist}
                 </span>
               )}
             </NavLink>
@@ -84,8 +119,11 @@ export default function AppLayout() {
               <ShoppingCart className="w-3.5 h-3.5" />
               <span className="hidden sm:inline">Cart</span>
               {totalItems > 0 && (
-                <span className="px-1.5 py-0.2 rounded-full bg-accent/25 text-accent border border-accent/40 text-[10px] font-semibold">
-                  {totalItems}
+                <span
+                  ref={cartBadgeRef}
+                  className="px-1.5 py-0.5 rounded-full bg-accent/25 text-accent border border-accent/40 text-[10px] font-semibold tracking-tight leading-none"
+                >
+                  {displayCart}
                 </span>
               )}
             </NavLink>
@@ -128,8 +166,11 @@ export default function AppLayout() {
 
       {/* Main Outlet */}
       <main className="flex-1 w-full my-6">
-        <Outlet context={{ customer, onWishlistUpdate: setWishlistCount }} />
+        <Outlet context={{ customer }} />
       </main>
+
+      {/* Global Undo Toast */}
+      <UndoToast />
 
       {/* App Minimalist Footer */}
       <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 border-t border-glass-border/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
@@ -157,5 +198,16 @@ export default function AppLayout() {
         </div>
       </footer>
     </div>
+  );
+}
+
+/**
+ * AppLayout Provider Shell
+ */
+export default function AppLayout() {
+  return (
+    <WishlistProvider>
+      <AppLayoutContent />
+    </WishlistProvider>
   );
 }

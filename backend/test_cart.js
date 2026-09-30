@@ -27,11 +27,11 @@ async function runCartTests() {
   console.log('=== STARTING LAB 05 SHOPPING CART POSTMAN TEST PLAN ===\n');
 
   // Test 1: Unauthenticated request to /cart
-  console.log('1. Testing Unauthenticated GET /cart...');
+  console.log('1. Testing Unauthenticated GET /api/cart...');
   const unauthRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: '/cart',
+    path: '/api/cart',
     method: 'GET',
   });
   console.log(`Status: ${unauthRes.status} (Expected: 401)`);
@@ -43,7 +43,7 @@ async function runCartTests() {
     {
       hostname: 'localhost',
       port: 5000,
-      path: '/customers/login',
+      path: '/api/customers/login',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     },
@@ -58,11 +58,11 @@ async function runCartTests() {
   const productId = '66d123abc456000000000002'; // RGB Mechanical Keyboard (stock: 12)
 
   // Test 3: Add new item to cart
-  console.log(`\n3. Testing POST /cart/${productId} (Add new item, expected qty 1)...`);
+  console.log(`\n3. Testing POST /api/cart/${productId} (Add new item, expected qty 1)...`);
   const add1 = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/cart/${productId}`,
+    path: `/api/cart/${productId}`,
     method: 'POST',
     headers: { Cookie: cookie },
   });
@@ -71,11 +71,11 @@ async function runCartTests() {
   console.log('Cart Item Quantity:', item1?.quantity, '(Expected: 1)');
 
   // Test 4: Add same item again (increment quantity)
-  console.log(`\n4. Testing POST /cart/${productId} again (Increment quantity, expected qty 2)...`);
+  console.log(`\n4. Testing POST /api/cart/${productId} again (Increment quantity, expected qty 2)...`);
   const add2 = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/cart/${productId}`,
+    path: `/api/cart/${productId}`,
     method: 'POST',
     headers: { Cookie: cookie },
   });
@@ -84,11 +84,11 @@ async function runCartTests() {
   console.log('Cart Item Quantity:', item2?.quantity, '(Expected: 2)');
 
   // Test 5: Get Cart
-  console.log('\n5. Testing GET /cart...');
+  console.log('\n5. Testing GET /api/cart...');
   const getRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: '/cart',
+    path: '/api/cart',
     method: 'GET',
     headers: { Cookie: cookie },
   });
@@ -102,12 +102,12 @@ async function runCartTests() {
   })));
 
   // Test 6: Update quantity
-  console.log(`\n6. Testing PATCH /cart/${productId} with quantity 3...`);
+  console.log(`\n6. Testing PATCH /api/cart/${productId} with quantity 3...`);
   const updateRes = await request(
     {
       hostname: 'localhost',
       port: 5000,
-      path: `/cart/${productId}`,
+      path: `/api/cart/${productId}`,
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -121,12 +121,12 @@ async function runCartTests() {
   console.log('Updated Quantity:', item3?.quantity, '(Expected: 3)');
 
   // Test 7: Exceed stock limit (Stock is 12, requesting 50)
-  console.log(`\n7. Testing PATCH /cart/${productId} exceeding stock (quantity: 50)...`);
+  console.log(`\n7. Testing PATCH /api/cart/${productId} exceeding stock (quantity: 50)...`);
   const exceedRes = await request(
     {
       hostname: 'localhost',
       port: 5000,
-      path: `/cart/${productId}`,
+      path: `/api/cart/${productId}`,
       method: 'PATCH',
       headers: {
         'Content-Type': 'application/json',
@@ -139,11 +139,11 @@ async function runCartTests() {
   console.log('Response:', exceedRes.data);
 
   // Test 8: Remove item from cart
-  console.log(`\n8. Testing DELETE /cart/${productId}...`);
+  console.log(`\n8. Testing DELETE /api/cart/${productId}...`);
   const delRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/cart/${productId}`,
+    path: `/api/cart/${productId}`,
     method: 'DELETE',
     headers: { Cookie: cookie },
   });
@@ -151,11 +151,11 @@ async function runCartTests() {
   console.log('Cart Items Remaining:', delRes.data.cart?.length, '(Expected: 0)');
 
   // Test 9: Remove non-existent item (404 Not Found)
-  console.log(`\n9. Testing DELETE /cart/${productId} again...`);
+  console.log(`\n9. Testing DELETE /api/cart/${productId} again...`);
   const delAgain = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/cart/${productId}`,
+    path: `/api/cart/${productId}`,
     method: 'DELETE',
     headers: { Cookie: cookie },
   });

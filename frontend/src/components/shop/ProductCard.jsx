@@ -3,7 +3,7 @@ import { Link } from 'react-router-dom';
 import { Heart, ShoppingCart, Check, Package } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { toggleWishlist } from '../../services/api';
+import { useWishlist } from '../../context/WishlistContext';
 import { useCart } from '../../context/CartContext';
 
 const formatPrice = (price) => {
@@ -18,33 +18,41 @@ const formatPrice = (price) => {
 /**
  * Apple-Grade Borderless Stage ProductCard
  * 
- * Design:
+ * Variants:
+ * - 'catalog' (default): Quick-add pill slides up on hover from bottom of image stage
+ * - 'wishlist': Filled heart to remove, full-width "Move to Cart" button below metadata
+ * 
+ * Features:
  * - Transparent & borderless at rest: image stage (4/5 aspect ratio) + metadata below
  * - Soft cursor-following radial light on desktop pointer devices (gsap.quickTo)
  * - Category text above product name
  * - Formatted INR price close to name with no awkward spacing
  * - Status dot for stock (In stock / Low stock / Out of stock)
- * - Quick-add pill sliding up from bottom of image stage on hover (always on touch)
- * - Wishlist heart top-right with optimistic toggle
+ * - Synchronized with WishlistContext & CartContext (zero duplicate local state)
  * - Entire card acts as semantic link to /products/:id
  */
 export default function ProductCard({
   product,
-  isWishlisted: initialWishlisted = false,
-  onWishlistChange,
+  variant = 'catalog',
   className = '',
+  onRemove,
+  onMoveToCart,
 }) {
   const cardRef = useRef(null);
+  const heartIconRef = useRef(null);
   const xTo = useRef(null);
   const yTo = useRef(null);
 
   const [imgError, setImgError] = useState(false);
-  const [isWishlisted, setIsWishlisted] = useState(initialWishlisted);
-  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
   const [isAddingCart, setIsAddingCart] = useState(false);
   const [justAdded, setJustAdded] = useState(false);
+  const [isMoving, setIsMoving] = useState(false);
 
-  const { addToCart, cartItems } = useCart();
+  // Single source of truth for Wishlist and Cart
+  const { ids, toggle, remove, restore, showToast } = useWishlist();
+  const { addToCart, removeFromCart, cartItems } = useCart();
+
+  const isWishlisted = Boolean(product?._id && ids.has(product._id));
   const cartItem = cartItems?.find(
     (item) => (item.product?._id || item.product) === product?._id
   );
@@ -83,26 +91,42 @@ export default function ProductCard({
     yTo.current(e.clientY - rect.top);
   };
 
-  const handleWishlistToggle = async (e) => {
+  const animateOut = (callback) => {
+    if (!cardRef.current || window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      callback();
+      return;
+    }
+    gsap.to(cardRef.current, {
+      scale: 0.96,
+      opacity: 0,
+      duration: 0.3,
+      ease: 'power2.out',
+      onComplete: callback,
+    });
+  };
+
+  const handleWishlistClick = (e) => {
     e.preventDefault();
     e.stopPropagation();
 
-    if (isTogglingWishlist || !product?._id) return;
+    if (!product?._id) return;
 
-    const previousState = isWishlisted;
-    setIsWishlisted(!previousState);
-    setIsTogglingWishlist(true);
+    if (heartIconRef.current && !window.matchMedia('(prefers-reduced-motion: reduce)').matches) {
+      gsap.fromTo(
+        heartIconRef.current,
+        { scale: 0.8 },
+        { scale: 1.25, duration: 0.15, yoyo: true, repeat: 1, ease: 'power2.out' }
+      );
+    }
 
-    try {
-      const res = await toggleWishlist(product._id);
-      const finalState = typeof res?.saved === 'boolean' ? res.saved : !previousState;
-      setIsWishlisted(finalState);
-      if (onWishlistChange) onWishlistChange(product._id, finalState);
-    } catch (err) {
-      setIsWishlisted(previousState);
-      console.error('Failed to toggle wishlist:', err);
-    } finally {
-      setIsTogglingWishlist(false);
+    if (variant === 'wishlist') {
+      if (onRemove) {
+        onRemove(product);
+      } else {
+        animateOut(() => remove(product._id));
+      }
+    } else {
+      toggle(product);
     }
   };
 
@@ -122,6 +146,37 @@ export default function ProductCard({
     } finally {
       setIsAddingCart(false);
     }
+  };
+
+  const handleMoveToCart = async (e) => {
+    e.preventDefault();
+    e.stopPropagation();
+
+    if (isMoving || isOutOfStock || !product?._id) return;
+
+    if (onMoveToCart) {
+      onMoveToCart(product);
+      return;
+    }
+
+    setIsMoving(true);
+    animateOut(async () => {
+      try {
+        await addToCart(product._id);
+        await remove(product._id, { showUndoToast: false });
+        showToast(`Moved "${product.name}" to cart`, () => {
+          restore(product);
+          removeFromCart(product._id);
+        });
+      } catch (err) {
+        console.error('Failed to move to cart:', err);
+        if (cardRef.current) {
+          gsap.to(cardRef.current, { scale: 1, opacity: 1, duration: 0.2 });
+        }
+      } finally {
+        setIsMoving(false);
+      }
+    });
   };
 
   return (
@@ -197,8 +252,7 @@ export default function ProductCard({
         {/* Wishlist Heart Button (Top-Right Glass Circle) */}
         <button
           type="button"
-          onClick={handleWishlistToggle}
-          disabled={isTogglingWishlist}
+          onClick={handleWishlistClick}
           aria-label={
             isWishlisted
               ? `Remove ${product?.name || 'item'} from wishlist`
@@ -210,15 +264,17 @@ export default function ProductCard({
               : 'opacity-90 sm:opacity-0 group-hover:opacity-100 bg-bg/75 border-glass-border/[0.12] text-muted hover:text-danger hover:border-danger/30 hover:scale-105'
           } active:scale-90`}
         >
-          <Heart
-            className={`w-4 h-4 transition-transform duration-200 ${
-              isWishlisted ? 'fill-current scale-110' : ''
-            }`}
-          />
+          <span ref={heartIconRef} className="inline-flex items-center justify-center">
+            <Heart
+              className={`w-4 h-4 transition-transform duration-200 ${
+                isWishlisted ? 'fill-current scale-110' : ''
+              }`}
+            />
+          </span>
         </button>
 
-        {/* Quick-Add Pill (Slides up from bottom of image stage on hover, always visible on touch) */}
-        {!isOutOfStock && (
+        {/* Catalog Variant Quick-Add Pill (Slides up from bottom of image on hover, always on touch) */}
+        {variant === 'catalog' && !isOutOfStock && (
           <div className="absolute inset-x-3 bottom-3 z-20 transition-all duration-300 transform sm:translate-y-3 sm:opacity-0 sm:pointer-events-none group-hover:translate-y-0 group-hover:opacity-100 group-hover:pointer-events-auto max-sm:translate-y-0 max-sm:opacity-100 max-sm:pointer-events-auto">
             <button
               type="button"
@@ -309,6 +365,43 @@ export default function ProductCard({
             </span>
           </div>
         </div>
+
+        {/* 3. Wishlist Variant Primary Action: Full-width Pill "Move to Cart" */}
+        {variant === 'wishlist' && (
+          <div className="pt-3">
+            {isOutOfStock ? (
+              <button
+                type="button"
+                disabled
+                className="w-full py-2.5 px-4 rounded-full text-xs font-semibold bg-glass/[0.04] text-muted border border-glass-border/[0.06] cursor-not-allowed text-center select-none"
+              >
+                Unavailable
+              </button>
+            ) : cartItem ? (
+              <div className="w-full py-2.5 px-4 rounded-full text-xs font-semibold bg-glass/[0.08] text-primary border border-glass-border/[0.14] flex items-center justify-center gap-1.5 select-none">
+                <Check className="w-3.5 h-3.5 text-accent stroke-[2.5]" />
+                <span>In Cart ({cartItem.quantity})</span>
+              </div>
+            ) : (
+              <button
+                type="button"
+                onClick={handleMoveToCart}
+                disabled={isMoving}
+                aria-label={`Move ${product?.name || 'item'} to cart`}
+                className="w-full py-2.5 px-4 rounded-full text-xs font-semibold bg-primary text-bg hover:opacity-95 border border-primary/90 transition-all duration-200 flex items-center justify-center gap-2 cursor-pointer shadow-md active:scale-[0.98]"
+              >
+                {isMoving ? (
+                  <div className="w-3.5 h-3.5 border-2 border-current border-t-transparent rounded-full animate-spin" />
+                ) : (
+                  <>
+                    <ShoppingCart className="w-3.5 h-3.5" />
+                    <span>Move to Cart</span>
+                  </>
+                )}
+              </button>
+            )}
+          </div>
+        )}
       </div>
     </article>
   );

@@ -2,7 +2,10 @@
  * Centralized API Service Layer for ShopKart (Lab 01, Lab 02, Lab 03)
  * Centralizes all customer authentication and product catalogue network requests.
  * Uses native fetch with credentials: 'include' for HttpOnly cookie persistence.
+ * All API routes are namespaced under /api to avoid collisions with SPA frontend routes.
  */
+
+const API_BASE = '/api';
 
 async function handleResponse(response) {
   const data = await response.json().catch(() => ({}));
@@ -25,7 +28,7 @@ async function handleResponse(response) {
  * @param {Object} formData - { fullName, email, password, phone }
  */
 export async function registerCustomer(formData) {
-  const res = await fetch('/customers/register', {
+  const res = await fetch(`${API_BASE}/customers/register`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -39,7 +42,7 @@ export async function registerCustomer(formData) {
  * @param {Object} credentials - { email, password }
  */
 export async function loginCustomer(credentials) {
-  const res = await fetch('/customers/login', {
+  const res = await fetch(`${API_BASE}/customers/login`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -52,7 +55,7 @@ export async function loginCustomer(credentials) {
  * Verify authentication state and fetch logged-in customer profile
  */
 export async function getMe() {
-  const res = await fetch('/customers/me', {
+  const res = await fetch(`${API_BASE}/customers/me`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -64,7 +67,7 @@ export async function getMe() {
  * Logout customer and clear session cookie
  */
 export async function logoutCustomer() {
-  const res = await fetch('/customers/logout', {
+  const res = await fetch(`${API_BASE}/customers/logout`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -89,7 +92,7 @@ export async function fetchProducts({ search = '', category = '', sort = '' } = 
   if (sort && sort.trim()) query.append('sort', sort.trim());
 
   const queryString = query.toString();
-  const url = queryString ? `/products?${queryString}` : '/products';
+  const url = queryString ? `${API_BASE}/products?${queryString}` : `${API_BASE}/products`;
 
   const res = await fetch(url, {
     method: 'GET',
@@ -103,7 +106,7 @@ export async function fetchProducts({ search = '', category = '', sort = '' } = 
  * @param {string} id - Product ObjectId
  */
 export async function fetchProductById(id) {
-  const res = await fetch(`/products/${id}`, {
+  const res = await fetch(`${API_BASE}/products/${id}`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
   });
@@ -115,7 +118,7 @@ export async function fetchProductById(id) {
  * @param {Object} productData - { name, description, price, category, image, stock }
  */
 export async function createProduct(productData) {
-  const res = await fetch('/products', {
+  const res = await fetch(`${API_BASE}/products`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify(productData),
@@ -132,7 +135,7 @@ export async function createProduct(productData) {
  * @param {string} productId - Product ObjectId
  */
 export async function addToWishlist(productId) {
-  const res = await fetch(`/wishlist/${productId}`, {
+  const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -144,7 +147,7 @@ export async function addToWishlist(productId) {
  * Get current user's populated wishlist
  */
 export async function getWishlist() {
-  const res = await fetch('/wishlist', {
+  const res = await fetch(`${API_BASE}/wishlist`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -157,7 +160,7 @@ export async function getWishlist() {
  * @param {string} productId - Product ObjectId
  */
 export async function removeFromWishlist(productId) {
-  const res = await fetch(`/wishlist/${productId}`, {
+  const res = await fetch(`${API_BASE}/wishlist/${productId}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -170,7 +173,7 @@ export async function removeFromWishlist(productId) {
  * @param {string} productId - Product ObjectId
  */
 export async function toggleWishlist(productId) {
-  const res = await fetch(`/wishlist/${productId}/toggle`, {
+  const res = await fetch(`${API_BASE}/wishlist/${productId}/toggle`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -187,7 +190,7 @@ export async function toggleWishlist(productId) {
  * @param {string} productId - Product ObjectId
  */
 export async function addToCart(productId) {
-  const res = await fetch(`/cart/${productId}`, {
+  const res = await fetch(`${API_BASE}/cart/${productId}`, {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -199,7 +202,7 @@ export async function addToCart(productId) {
  * Get current user's populated shopping cart
  */
 export async function getCart() {
-  const res = await fetch('/cart', {
+  const res = await fetch(`${API_BASE}/cart`, {
     method: 'GET',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -213,7 +216,7 @@ export async function getCart() {
  * @param {number} quantity - New quantity (>= 1)
  */
 export async function updateCartQuantity(productId, quantity) {
-  const res = await fetch(`/cart/${productId}`, {
+  const res = await fetch(`${API_BASE}/cart/${productId}`, {
     method: 'PATCH',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',
@@ -227,7 +230,7 @@ export async function updateCartQuantity(productId, quantity) {
  * @param {string} productId - Product ObjectId
  */
 export async function removeFromCart(productId) {
-  const res = await fetch(`/cart/${productId}`, {
+  const res = await fetch(`${API_BASE}/cart/${productId}`, {
     method: 'DELETE',
     headers: { 'Content-Type': 'application/json' },
     credentials: 'include',

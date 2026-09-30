@@ -15,8 +15,9 @@ import {
 } from 'lucide-react';
 import gsap from 'gsap';
 import { useGSAP } from '@gsap/react';
-import { fetchProductById, fetchProducts, toggleWishlist, getWishlist } from '../services/api';
+import { fetchProductById, fetchProducts } from '../services/api';
 import { useCart } from '../context/CartContext';
+import { useWishlist } from '../context/WishlistContext';
 import ProductCard from '../components/shop/ProductCard';
 import GlassButton from '../components/ui/GlassButton';
 import GlassCard from '../components/ui/GlassCard';
@@ -58,9 +59,8 @@ export default function ProductDetails() {
   const [quantity, setQuantity] = useState(1);
   const [imgError, setImgError] = useState(false);
 
-  // Wishlist state
-  const [isWishlisted, setIsWishlisted] = useState(false);
-  const [isTogglingWishlist, setIsTogglingWishlist] = useState(false);
+  // Central Wishlist context (Single Source of Truth)
+  const { ids, toggle } = useWishlist();
 
   // Cart operations & feedback
   const { addToCart, cartItems } = useCart();
@@ -70,7 +70,7 @@ export default function ProductDetails() {
   // Mobile sticky bottom bar visibility (shows when main button scrolls out of view)
   const [showStickyBar, setShowStickyBar] = useState(false);
 
-  // 1. Fetch Product and Check Wishlist
+  // 1. Fetch Product
   useEffect(() => {
     let isMounted = true;
 
@@ -87,18 +87,6 @@ export default function ProductDetails() {
 
         const prod = data.product;
         setProduct(prod);
-
-        // Fetch wishlist to see if this item is currently saved
-        getWishlist()
-          .then((wData) => {
-            if (isMounted && wData?.wishlist) {
-              const inWishlist = wData.wishlist.some(
-                (w) => (w._id || w) === prod._id || (w.product?._id || w.product) === prod._id
-              );
-              setIsWishlisted(inWishlist);
-            }
-          })
-          .catch(() => {});
 
         // Fetch related products from the same category
         if (prod.category) {
@@ -152,6 +140,7 @@ export default function ProductDetails() {
     );
   }, [cartItems, product]);
 
+  const isWishlisted = Boolean(product?._id && ids.has(product._id));
   const isOutOfStock = (product?.stock ?? 0) <= 0;
   const isLowStock = !isOutOfStock && product?.stock !== undefined && product.stock <= 5;
   const maxAvailable = product?.stock || 1;
@@ -182,23 +171,9 @@ export default function ProductDetails() {
     }
   };
 
-  const handleWishlistToggle = async () => {
-    if (isTogglingWishlist || !product?._id) return;
-
-    const previousState = isWishlisted;
-    setIsWishlisted(!previousState);
-    setIsTogglingWishlist(true);
-
-    try {
-      const res = await toggleWishlist(product._id);
-      const finalState = typeof res?.saved === 'boolean' ? res.saved : !previousState;
-      setIsWishlisted(finalState);
-    } catch (err) {
-      setIsWishlisted(previousState);
-      console.error('Failed to toggle wishlist:', err);
-    } finally {
-      setIsTogglingWishlist(false);
-    }
+  const handleWishlistToggle = () => {
+    if (!product?._id) return;
+    toggle(product);
   };
 
   // 3. GSAP Animations: Image Stage Scale-in & Info Column Stagger
@@ -494,7 +469,6 @@ export default function ProductDetails() {
                 <button
                   type="button"
                   onClick={handleWishlistToggle}
-                  disabled={isTogglingWishlist}
                   aria-label={
                     isWishlisted ? 'Remove from wishlist' : 'Add to wishlist'
                   }
