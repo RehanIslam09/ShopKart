@@ -48,7 +48,7 @@ export default function AppLayout() {
   return (
     <div className="min-h-screen flex flex-col justify-between bg-bg text-primary">
       {/* App Top Glass Header Bar */}
-      <header className="sticky top-4 z-50 px-4 sm:px-6 w-full max-w-6xl mx-auto transition-all duration-300">
+      <header className="sticky top-4 z-50 px-4 sm:px-6 w-full max-w-7xl mx-auto transition-all duration-300">
         <nav className="flex items-center justify-between px-5 py-3 rounded-full bg-bg/80 backdrop-blur-2xl border border-glass-border/[0.1] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]">
           {/* Brand Mark */}
           <Link
@@ -96,16 +96,20 @@ export default function AppLayout() {
             {customer && (
               <div className="hidden md:flex flex-col text-right">
                 <span className="text-xs font-medium text-primary leading-tight">
-                  {customer.fullName}
+                  {customer.fullName?.trim() || customer.email?.split('@')[0] || 'Member'}
                 </span>
-                <span className="text-[11px] text-muted leading-tight truncate max-w-[130px]">
-                  {customer.email}
+                <span className="text-[11px] text-muted leading-tight truncate max-w-[140px]">
+                  {customer.email || ''}
                 </span>
               </div>
             )}
 
-            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-xs font-semibold text-accent">
-              {customer?.fullName ? customer.fullName.charAt(0).toUpperCase() : <User className="w-4 h-4" />}
+            <div className="w-8 h-8 rounded-full bg-accent/15 border border-accent/30 flex items-center justify-center text-xs font-semibold text-accent select-none">
+              {(customer?.fullName?.trim() || customer?.email?.split('@')[0]) ? (
+                (customer.fullName?.trim() || customer.email.split('@')[0]).charAt(0).toUpperCase()
+              ) : (
+                <User className="w-4 h-4" />
+              )}
             </div>
 
             <GlassButton
@@ -114,6 +118,7 @@ export default function AppLayout() {
               onClick={handleLogout}
               className="text-xs hover:text-danger hover:bg-danger/10"
               icon={<LogOut className="w-3.5 h-3.5" />}
+              aria-label="Log out of account"
             >
               <span className="hidden sm:inline">Logout</span>
             </GlassButton>
@@ -127,19 +132,19 @@ export default function AppLayout() {
       </main>
 
       {/* App Minimalist Footer */}
-      <footer className="w-full max-w-6xl mx-auto px-6 py-6 border-t border-glass-border/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-3">
+      <footer className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 border-t border-glass-border/[0.06] flex flex-col sm:flex-row items-center justify-between text-xs text-muted gap-4">
         <div className="flex items-center gap-2">
           <span className="font-semibold text-primary">ShopKart</span>
           <span>•</span>
           <span>Verified Secure Session</span>
         </div>
         <div className="flex items-center gap-4 text-[11px]">
-          <Link to="/" className="hover:text-primary transition-colors">
-            Landing
+          <Link to="/home" className="hover:text-primary transition-colors">
+            Home
           </Link>
           <span>•</span>
           <Link to="/products" className="hover:text-primary transition-colors">
-            Catalog
+            Products
           </Link>
           <span>•</span>
           <Link to="/wishlist" className="hover:text-primary transition-colors">

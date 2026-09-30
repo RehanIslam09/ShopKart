@@ -4,16 +4,7 @@ const Customer = require('../models/customer.model');
 const generateToken = require('../utils/generateToken');
 
 // In-memory store for customers when MongoDB is offline
-const fallbackCustomers = [
-  {
-    _id: '66d123abc456000000000099',
-    fullName: 'John Doe',
-    email: 'john@gmail.com',
-    password: bcrypt.hashSync('password123', 10),
-    phone: '9876543210',
-    wishlist: [],
-  },
-];
+const fallbackCustomers = [];
 
 /**
  * Task 1: Register a new Customer
@@ -131,20 +122,6 @@ const loginCustomer = async (req, res) => {
       customer = await Customer.findOne({ email: normalizedEmail });
     } else {
       customer = fallbackCustomers.find((c) => c.email === normalizedEmail);
-      // Auto-register test user if logging in for first time offline
-      if (!customer && normalizedEmail === 'john@gmail.com') {
-        const salt = await bcrypt.genSalt(10);
-        const hash = await bcrypt.hash('password123', salt);
-        customer = {
-          _id: '66d123abc456000000000099',
-          fullName: 'John Doe',
-          email: 'john@gmail.com',
-          password: hash,
-          phone: '9876543210',
-          wishlist: [],
-        };
-        fallbackCustomers.push(customer);
-      }
     }
 
     if (!customer) {
@@ -304,4 +281,5 @@ module.exports = {
   getProfile,
   logoutCustomer,
   changePassword,
+  fallbackCustomers,
 };

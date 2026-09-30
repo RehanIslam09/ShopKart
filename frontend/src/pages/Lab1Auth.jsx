@@ -19,15 +19,15 @@ export default function Lab1Auth({ onCustomerChange }) {
 
   // Form states
   const [registerForm, setRegisterForm] = useState({
-    fullName: 'John Doe',
-    email: 'john@gmail.com',
-    password: 'password123',
-    phone: '9876543210',
+    fullName: '',
+    email: '',
+    password: '',
+    phone: '',
   });
 
   const [loginForm, setLoginForm] = useState({
-    email: 'john@gmail.com',
-    password: 'password123',
+    email: '',
+    password: '',
   });
 
   const [passwordForm, setPasswordForm] = useState({
@@ -399,7 +399,7 @@ export default function Lab1Auth({ onCustomerChange }) {
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <InputField
                       label="Full Name"
-                      placeholder="John Doe"
+                      placeholder="Ada Lovelace"
                       value={registerForm.fullName}
                       onChange={(e) =>
                         setRegisterForm({ ...registerForm, fullName: e.target.value })

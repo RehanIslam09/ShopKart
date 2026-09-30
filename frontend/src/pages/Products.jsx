@@ -1,4 +1,5 @@
 import { useEffect, useState } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import SearchBar from '../components/SearchBar';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../services/api';
@@ -7,17 +8,44 @@ import GlassButton from '../components/ui/GlassButton';
 /**
  * Product Catalog Page ("/products")
  * Displays dynamic product inventory with live search, category filtering,
- * and price sorting backed by MongoDB.
+ * and price sorting backed by MongoDB. Supports URL query params (q, category, sort).
  */
 export default function Products() {
+  const [searchParams, setSearchParams] = useSearchParams();
+  const search = searchParams.get('q') || searchParams.get('search') || '';
+  const category = searchParams.get('category') || 'All';
+  const sort = searchParams.get('sort') || '';
+
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Search & Filter state
-  const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
-  const [sort, setSort] = useState('');
+  const setSearch = (newSearch) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (newSearch) next.set('q', newSearch);
+      else next.delete('q');
+      return next;
+    });
+  };
+
+  const setCategory = (newCat) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (newCat && newCat !== 'All') next.set('category', newCat);
+      else next.delete('category');
+      return next;
+    });
+  };
+
+  const setSort = (newSort) => {
+    setSearchParams((prev) => {
+      const next = new URLSearchParams(prev);
+      if (newSort) next.set('sort', newSort);
+      else next.delete('sort');
+      return next;
+    });
+  };
 
   // Fetch products on query state changes
   useEffect(() => {
@@ -61,10 +89,11 @@ export default function Products() {
     setSearch('');
     setCategory('All');
     setSort('');
+    setSearchParams({});
   };
 
   return (
-    <div className="w-full max-w-6xl mx-auto px-4 py-8 space-y-6">
+    <div className="w-full max-w-7xl mx-auto px-4 sm:px-6 py-8 space-y-6">
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-left">
         <div>

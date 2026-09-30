@@ -1,6 +1,7 @@
 const jwt = require('jsonwebtoken');
 const mongoose = require('mongoose');
 const Customer = require('../models/customer.model');
+const { fallbackCustomers } = require('../controllers/customer.controller');
 
 /**
  * Middleware to protect routes that require customer authentication.
@@ -24,12 +25,17 @@ const protect = async (req, res, next) => {
     if (mongoose.connection.readyState === 1) {
       customer = await Customer.findById(decoded.id).select('-password');
     } else {
-      customer = {
-        _id: decoded.id,
-        fullName: 'John Doe',
-        email: 'john@gmail.com',
-        phone: '9876543210',
-      };
+      const match = fallbackCustomers.find(
+        (c) => c._id === decoded.id || c._id?.toString() === decoded.id?.toString()
+      );
+      if (match) {
+        customer = {
+          _id: match._id,
+          fullName: match.fullName,
+          email: match.email,
+          phone: match.phone,
+        };
+      }
     }
 
     if (!customer) {
