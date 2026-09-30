@@ -107,6 +107,11 @@ export function CartProvider({ children }) {
     return cartItems.reduce((acc, item) => acc + item.quantity, 0);
   }, [cartItems]);
 
+  // Clear cart state on logout
+  const clearCart = () => {
+    setCartItems([]);
+  };
+
   const value = {
     cartItems,
     loading,
@@ -117,6 +122,7 @@ export function CartProvider({ children }) {
     updateQuantity,
     removeFromCart,
     refreshCart,
+    clearCart,
   };
 
   return <CartContext.Provider value={value}>{children}</CartContext.Provider>;

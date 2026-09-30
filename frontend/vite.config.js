@@ -11,27 +11,17 @@ export default defineConfig({
   server: {
     port: 5173,
     proxy: {
-      '/customers': {
+      '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,
       },
-      '/products': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/wishlist': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/cart': {
-        target: 'http://localhost:5000',
-        changeOrigin: true,
-        secure: false,
-      },
-      '/health': {
+    },
+  },
+  preview: {
+    port: 5173,
+    proxy: {
+      '/api': {
         target: 'http://localhost:5000',
         changeOrigin: true,
         secure: false,

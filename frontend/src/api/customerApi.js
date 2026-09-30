@@ -3,7 +3,7 @@
  * Handles all HTTP communications with credentials: 'include' for HttpOnly cookies.
  */
 
-const BASE_URL = '/customers';
+const BASE_URL = '/api/customers';
 
 /**
  * Helper to process JSON responses and handle HTTP errors gracefully

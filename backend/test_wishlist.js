@@ -27,11 +27,11 @@ async function runTests() {
   console.log('=== STARTING LAB 04 POSTMAN TEST PLAN ===\n');
 
   // Test 1: Unauthenticated request to /wishlist
-  console.log('1. Testing Unauthenticated GET /wishlist...');
+  console.log('1. Testing Unauthenticated GET /api/wishlist...');
   const unauthRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: '/wishlist',
+    path: '/api/wishlist',
     method: 'GET',
   });
   console.log(`Status: ${unauthRes.status} (Expected: 401)`);
@@ -43,7 +43,7 @@ async function runTests() {
     {
       hostname: 'localhost',
       port: 5000,
-      path: '/customers/login',
+      path: '/api/customers/login',
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
     },
@@ -58,11 +58,11 @@ async function runTests() {
   const productId = '66d123abc456000000000001';
 
   // Test 3: Add to Wishlist
-  console.log(`\n3. Testing POST /wishlist/${productId} (Add product)...`);
+  console.log(`\n3. Testing POST /api/wishlist/${productId} (Add product)...`);
   const addRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}`,
+    path: `/api/wishlist/${productId}`,
     method: 'POST',
     headers: { Cookie: cookie },
   });
@@ -70,11 +70,11 @@ async function runTests() {
   console.log('Response:', addRes.data);
 
   // Test 4: Duplicate prevention (409 Conflict)
-  console.log(`\n4. Testing Duplicate POST /wishlist/${productId}...`);
+  console.log(`\n4. Testing Duplicate POST /api/wishlist/${productId}...`);
   const dupRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}`,
+    path: `/api/wishlist/${productId}`,
     method: 'POST',
     headers: { Cookie: cookie },
   });
@@ -82,11 +82,11 @@ async function runTests() {
   console.log('Response:', dupRes.data);
 
   // Test 5: Get Wishlist (Populated)
-  console.log('\n5. Testing GET /wishlist...');
+  console.log('\n5. Testing GET /api/wishlist...');
   const getRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: '/wishlist',
+    path: '/api/wishlist',
     method: 'GET',
     headers: { Cookie: cookie },
   });
@@ -95,11 +95,11 @@ async function runTests() {
   console.log('Items:', getRes.data.wishlist.map(p => ({ id: p._id, name: p.name, price: p.price })));
 
   // Test 6: Remove from Wishlist
-  console.log(`\n6. Testing DELETE /wishlist/${productId}...`);
+  console.log(`\n6. Testing DELETE /api/wishlist/${productId}...`);
   const delRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}`,
+    path: `/api/wishlist/${productId}`,
     method: 'DELETE',
     headers: { Cookie: cookie },
   });
@@ -107,11 +107,11 @@ async function runTests() {
   console.log('Response:', delRes.data);
 
   // Test 7: Remove non-existent item (404 Not Found)
-  console.log(`\n7. Testing Duplicate DELETE /wishlist/${productId}...`);
+  console.log(`\n7. Testing Duplicate DELETE /api/wishlist/${productId}...`);
   const delAgainRes = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}`,
+    path: `/api/wishlist/${productId}`,
     method: 'DELETE',
     headers: { Cookie: cookie },
   });
@@ -119,11 +119,11 @@ async function runTests() {
   console.log('Response:', delAgainRes.data);
 
   // Test 8: Bonus Challenge - Toggle Wishlist
-  console.log(`\n8. Testing Bonus PATCH /wishlist/${productId}/toggle...`);
+  console.log(`\n8. Testing Bonus PATCH /api/wishlist/${productId}/toggle...`);
   const toggle1 = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}/toggle`,
+    path: `/api/wishlist/${productId}/toggle`,
     method: 'PATCH',
     headers: { Cookie: cookie },
   });
@@ -132,7 +132,7 @@ async function runTests() {
   const toggle2 = await request({
     hostname: 'localhost',
     port: 5000,
-    path: `/wishlist/${productId}/toggle`,
+    path: `/api/wishlist/${productId}/toggle`,
     method: 'PATCH',
     headers: { Cookie: cookie },
   });
