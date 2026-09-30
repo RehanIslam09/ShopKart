@@ -1,8 +1,17 @@
-import React, { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { registerCustomer } from '../services/api';
+import { User, Mail, Phone, Lock, AlertCircle } from 'lucide-react';
+import { registerCustomer, loginCustomer, getMe } from '../services/api';
+import AuthShell from '../components/auth/AuthShell';
+import InputField from '../components/ui/InputField';
+import GlassButton from '../components/ui/GlassButton';
 
-export default function Register() {
+/**
+ * Register Page ("/register")
+ * Centered glass authentication card wrapped in AuthShell.
+ * Automatically redirects already-authenticated sessions to /home.
+ */
+export default function Register({ setCustomer }) {
   const navigate = useNavigate();
 
   const [formData, setFormData] = useState({
@@ -14,6 +23,25 @@ export default function Register() {
 
   const [error, setError] = useState(null);
   const [isLoading, setIsLoading] = useState(false);
+
+  // If already authenticated, redirect immediately to /home
+  useEffect(() => {
+    let isMounted = true;
+    getMe()
+      .then((data) => {
+        if (isMounted && data) {
+          if (setCustomer) setCustomer(data);
+          navigate('/home', { replace: true });
+        }
+      })
+      .catch(() => {
+        // Unauthenticated - stay on /register
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate, setCustomer]);
 
   const handleChange = (e) => {
     setFormData((prev) => ({
@@ -49,9 +77,20 @@ export default function Register() {
     try {
       setIsLoading(true);
       setError(null);
+
+      // 1. Create customer account on backend
       await registerCustomer(formData);
-      // On success, redirect to login page
-      navigate('/login', { state: { registeredEmail: formData.email } });
+
+      // 2. Automatically log in user and navigate to /home
+      try {
+        await loginCustomer({ email: formData.email, password: formData.password });
+        const me = await getMe();
+        if (setCustomer) setCustomer(me);
+        navigate('/home');
+      } catch {
+        // Fallback: redirect to /login with registered email
+        navigate('/login', { state: { registeredEmail: formData.email } });
+      }
     } catch (err) {
       setError(err.message || 'Registration failed. Please try again.');
     } finally {
@@ -60,102 +99,93 @@ export default function Register() {
   };
 
   return (
-    <div className="w-full max-w-md mx-auto px-4 py-12">
-      <div className="rounded-3xl p-8 bg-white/[0.04] border border-white/[0.08] backdrop-blur-2xl shadow-[0_8px_32px_0_rgba(0,0,0,0.37)] text-left">
-        {/* Header */}
-        <div className="text-center space-y-1.5 mb-6">
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] text-zinc-400">
-            <span>ShopKart</span>
-            <span>•</span>
-            <span className="text-zinc-200">Lab 02</span>
-          </div>
-          <h1 className="text-2xl font-semibold tracking-tight text-white">
-            Create an Account
-          </h1>
-          <p className="text-xs text-zinc-400">
-            Join ShopKart to explore the product catalogue
-          </p>
+    <AuthShell
+      title="Create Account"
+      subtitle="Join ShopKart to experience curated workspace gear"
+      badgeText="New Customer"
+    >
+      {/* Inline Error Alert */}
+      {error && (
+        <div className="mb-5 p-3.5 rounded-2xl bg-danger/15 border border-danger/30 text-danger text-xs flex items-center gap-2.5">
+          <AlertCircle className="w-4 h-4 shrink-0" />
+          <span>{error}</span>
         </div>
+      )}
 
-        {/* Error Alert */}
-        {error && (
-          <div className="mb-4 p-3 rounded-2xl bg-rose-500/15 border border-rose-500/30 text-rose-300 text-xs flex items-center gap-2">
-            <span className="w-1.5 h-1.5 rounded-full bg-rose-400 shrink-0" />
-            <span>{error}</span>
-          </div>
-        )}
+      {/* Registration Form */}
+      <form onSubmit={handleSubmit} className="space-y-3.5">
+        <InputField
+          label="Full Name"
+          id="register-name"
+          name="fullName"
+          type="text"
+          placeholder="Ada Lovelace"
+          value={formData.fullName}
+          onChange={handleChange}
+          leftIcon={<User className="w-4 h-4" />}
+          required
+        />
 
-        {/* Registration Form */}
-        <form onSubmit={handleSubmit} className="space-y-4">
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-400">Full Name</label>
-            <input
-              type="text"
-              name="fullName"
-              placeholder="John Doe"
-              value={formData.fullName}
-              onChange={handleChange}
-              className="w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-indigo-400/70 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              required
-            />
-          </div>
+        <InputField
+          label="Email Address"
+          id="register-email"
+          name="email"
+          type="email"
+          placeholder="ada@example.com"
+          value={formData.email}
+          onChange={handleChange}
+          leftIcon={<Mail className="w-4 h-4" />}
+          required
+        />
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-400">Email Address</label>
-            <input
-              type="email"
-              name="email"
-              placeholder="john@gmail.com"
-              value={formData.email}
-              onChange={handleChange}
-              className="w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-indigo-400/70 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              required
-            />
-          </div>
+        <InputField
+          label="Phone Number"
+          id="register-phone"
+          name="phone"
+          type="tel"
+          placeholder="9876543210"
+          value={formData.phone}
+          onChange={handleChange}
+          leftIcon={<Phone className="w-4 h-4" />}
+          required
+        />
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-400">Phone Number</label>
-            <input
-              type="tel"
-              name="phone"
-              placeholder="9876543210"
-              value={formData.phone}
-              onChange={handleChange}
-              className="w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-indigo-400/70 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              required
-            />
-          </div>
+        <InputField
+          label="Password"
+          id="register-password"
+          name="password"
+          type="password"
+          placeholder="At least 6 characters"
+          value={formData.password}
+          onChange={handleChange}
+          leftIcon={<Lock className="w-4 h-4" />}
+          showPasswordToggle
+          required
+        />
 
-          <div className="space-y-1">
-            <label className="text-xs font-medium text-zinc-400">Password</label>
-            <input
-              type="password"
-              name="password"
-              placeholder="At least 6 characters"
-              value={formData.password}
-              onChange={handleChange}
-              className="w-full rounded-2xl bg-white/[0.04] border border-white/[0.08] px-4 py-2.5 text-sm text-zinc-100 placeholder-zinc-500 outline-none focus:border-indigo-400/70 focus:ring-4 focus:ring-indigo-500/10 transition-all"
-              required
-            />
-          </div>
-
-          <button
+        <div className="pt-2">
+          <GlassButton
             type="submit"
-            disabled={isLoading}
-            className="w-full mt-2 py-2.5 rounded-2xl bg-white text-zinc-950 font-medium text-sm hover:bg-zinc-200 transition-all cursor-pointer disabled:opacity-50 active:scale-[0.98] shadow-md shadow-white/10"
+            variant="primary"
+            size="lg"
+            isLoading={isLoading}
+            className="w-full text-sm font-semibold"
           >
             {isLoading ? 'Creating Account...' : 'Create Account'}
-          </button>
-        </form>
+          </GlassButton>
+        </div>
+      </form>
 
-        {/* Footer Link */}
-        <p className="mt-6 text-center text-xs text-zinc-400">
-          Already have an account?{' '}
-          <Link to="/login" className="text-indigo-400 hover:text-indigo-300 font-medium">
-            Sign in
-          </Link>
-        </p>
-      </div>
-    </div>
+      {/* Switch to Login */}
+      <p className="mt-6 text-center text-xs text-muted">
+        Already have an account?{' '}
+        <Link
+          to="/login"
+          className="text-accent hover:underline font-medium ml-1 transition-colors"
+        >
+          Sign in
+        </Link>
+      </p>
+    </AuthShell>
   );
 }

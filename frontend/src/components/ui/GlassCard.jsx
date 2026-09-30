@@ -1,38 +1,78 @@
-import React from 'react';
+import { memo } from 'react';
 
 /**
- * Reusable Glassmorphism Card Component
- * Follows Apple-like minimal aesthetics with translucent blur and subtle borders.
+ * Apple-style Glassmorphism Card Component
+ * Strictly uses design tokens: translucent fill, 1px subtle border,
+ * isolated backdrop blur layer, faint top inner highlight, and soft large shadow.
+ * 
+ * Performance Architecture:
+ * - Separates backdrop blur layer from content layer into dedicated sub-surfaces.
+ * - Forces GPU hardware layer composition via `gpu-layer` and `blur-isolation`.
+ * - Prevents compositor tile invalidation and repaint flickering during transforms.
  *
  * @param {Object} props
  * @param {React.ReactNode} props.children - Card content
- * @param {string} [props.className] - Extra Tailwind classes
- * @param {boolean} [props.hoverable=false] - Whether to apply hover lift/glow
- * @param {'default'|'elevated'|'subtle'} [props.variant='default'] - Card depth variant
+ * @param {string} [props.className] - Additional classes
+ * @param {boolean} [props.hoverLift=false] - Subtle scale/elevation lift on hover
+ * @param {'none'|'sm'|'default'|'lg'|'xl'} [props.padding='default'] - Card padding
+ * @param {'default'|'elevated'|'subtle'} [props.variant='default'] - Depth variant
  */
-export default function GlassCard({
+function GlassCardComponent({
   children,
   className = '',
-  hoverable = false,
+  hoverLift = false,
+  hoverable = false, // Backwards compatibility with existing Lab code
+  padding = 'default',
   variant = 'default',
   ...props
 }) {
-  const variantStyles = {
-    default: 'bg-white/[0.04] border-white/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.25)]',
-    elevated: 'bg-white/[0.07] border-white/[0.14] shadow-[0_16px_40px_0_rgba(0,0,0,0.35)]',
-    subtle: 'bg-white/[0.02] border-white/[0.05] shadow-[0_4px_16px_0_rgba(0,0,0,0.15)]',
+  const shouldLift = hoverLift || hoverable;
+
+  const paddingStyles = {
+    none: 'p-0',
+    sm: 'p-4',
+    default: 'p-6 sm:p-8',
+    lg: 'p-8 sm:p-10',
+    xl: 'p-10 sm:p-12',
   };
 
-  const hoverStyles = hoverable
-    ? 'hover:bg-white/[0.07] hover:border-white/[0.16] hover:translate-y-[-2px] transition-all duration-300'
-    : '';
+  const variantStyles = {
+    default: 'bg-glass/[0.04] border-glass-border/[0.08] shadow-[0_8px_32px_0_rgba(0,0,0,0.37)]',
+    elevated: 'bg-glass/[0.07] border-glass-border/[0.14] shadow-[0_16px_48px_0_rgba(0,0,0,0.45)]',
+    subtle: 'bg-glass/[0.02] border-glass-border/[0.05] shadow-[0_4px_20px_0_rgba(0,0,0,0.2)]',
+  };
+
+  const liftStyles = shouldLift
+    ? 'hover:-translate-y-1 hover:border-glass-border/[0.16] hover:bg-glass/[0.06] transition-all duration-300'
+    : 'transition-all duration-200';
 
   return (
     <div
-      className={`rounded-3xl border backdrop-blur-2xl text-zinc-100 ${variantStyles[variant] || variantStyles.default} ${hoverStyles} ${className}`}
+      className={`relative rounded-3xl text-primary blur-isolation ${liftStyles} ${className}`}
       {...props}
     >
-      {children}
+      {/* 
+        ISOLATED BLUR & BACKGROUND LAYER
+        Separated from content layer to prevent GPU rasterization flicker during continuous motion
+      */}
+      <div
+        className={`pointer-events-none absolute inset-0 -z-10 rounded-3xl border backdrop-blur-xl overflow-hidden gpu-layer ${variantStyles[variant] || variantStyles.default}`}
+        aria-hidden="true"
+      >
+        {/* Faint top inner highlight line */}
+        <div
+          className="absolute inset-x-0 top-0 h-px bg-gradient-to-r from-transparent via-glass/20 to-transparent"
+          aria-hidden="true"
+        />
+      </div>
+
+      {/* CONTENT LAYER: Rendered on clean z-index above the blur canvas */}
+      <div className={`relative z-10 w-full ${paddingStyles[padding] || ''}`}>
+        {children}
+      </div>
     </div>
   );
 }
+
+const GlassCard = memo(GlassCardComponent);
+export default GlassCard;

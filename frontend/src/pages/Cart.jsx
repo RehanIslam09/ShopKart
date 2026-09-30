@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CartItem from '../components/CartItem';
 import { useCart } from '../context/CartContext';
@@ -98,8 +98,8 @@ export default function Cart() {
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
         {/* Left Column: Cart Items List (8 cols) */}
         <div className="lg:col-span-8 space-y-4">
-          {cartItems.map((item) => (
-            <CartItem key={item.product?._id || Math.random()} item={item} />
+          {cartItems.map((item, idx) => (
+            <CartItem key={item.product?._id || item._id || idx} item={item} />
           ))}
         </div>
 

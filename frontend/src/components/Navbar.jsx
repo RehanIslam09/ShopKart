@@ -1,4 +1,3 @@
-import React from 'react';
 import { Link, NavLink, useNavigate } from 'react-router-dom';
 import { logoutCustomer } from '../services/api';
 import { useCart } from '../context/CartContext';
