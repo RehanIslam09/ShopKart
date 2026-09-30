@@ -1,54 +1,60 @@
-import React from 'react';
-
 /**
- * Reusable Glassmorphism Button Component
- * Supports Apple-like tactile feedback, smooth micro-interactions, and loading states.
+ * Apple-style Pill Glassmorphism Button Component
+ * Supports polymorphic rendering (as={Link} or native <button>),
+ * variants (primary, glass, ghost), loading spinner, and keyboard focus states.
  *
  * @param {Object} props
- * @param {React.ReactNode} props.children - Button label or elements
- * @param {'primary'|'secondary'|'danger'|'ghost'} [props.variant='secondary'] - Visual style
+ * @param {React.ReactNode} props.children - Button label / content
+ * @param {'primary'|'glass'|'secondary'|'ghost'|'danger'} [props.variant='glass'] - Style variant
  * @param {'sm'|'md'|'lg'} [props.size='md'] - Button size
- * @param {boolean} [props.isLoading=false] - Whether to show loading spinner
- * @param {React.ReactNode} [props.icon] - Optional icon element
+ * @param {boolean} [props.isLoading=false] - Loading spinner state
+ * @param {React.ReactNode} [props.icon] - Optional icon
+ * @param {React.ElementType} [props.as='button'] - Polymorphic tag or component (e.g. Link)
  * @param {string} [props.className] - Additional classes
  * @param {boolean} [props.disabled=false] - Disabled state
  */
 export default function GlassButton({
   children,
-  variant = 'secondary',
+  variant = 'glass',
   size = 'md',
   isLoading = false,
   icon,
+  as: Component = 'button',
   className = '',
   disabled = false,
   type = 'button',
   ...props
 }) {
   const sizeStyles = {
-    sm: 'text-xs px-3 py-1.5 rounded-xl gap-1.5',
-    md: 'text-sm px-4 py-2.5 rounded-2xl gap-2',
-    lg: 'text-base px-6 py-3 rounded-2xl gap-2.5',
+    sm: 'text-xs px-3.5 py-1.5 gap-1.5',
+    md: 'text-sm px-5 py-2.5 gap-2',
+    lg: 'text-base px-7 py-3.5 gap-2.5 font-medium',
   };
 
   const variantStyles = {
     primary:
-      'bg-white text-zinc-950 font-medium hover:bg-zinc-200 border border-transparent shadow-[0_4px_16px_rgba(255,255,255,0.2)]',
+      'bg-primary text-bg font-semibold hover:opacity-90 border border-transparent shadow-[0_4px_24px_rgba(var(--glass)/0.2)]',
+    glass:
+      'bg-glass/[0.08] hover:bg-glass/[0.14] text-primary border border-glass-border/[0.14] backdrop-blur-md shadow-sm',
     secondary:
-      'bg-white/[0.08] hover:bg-white/[0.14] text-white border border-white/[0.12] backdrop-blur-md shadow-sm',
-    danger:
-      'bg-rose-500/15 hover:bg-rose-500/25 text-rose-300 border border-rose-500/30 backdrop-blur-md',
+      'bg-glass/[0.08] hover:bg-glass/[0.14] text-primary border border-glass-border/[0.14] backdrop-blur-md shadow-sm',
     ghost:
-      'bg-transparent hover:bg-white/[0.06] text-zinc-300 hover:text-white border border-transparent',
+      'bg-transparent hover:bg-glass/[0.06] text-muted hover:text-primary border border-transparent',
+    danger:
+      'bg-danger/15 hover:bg-danger/25 text-danger border border-danger/30 backdrop-blur-md',
   };
 
   const isDisabled = disabled || isLoading;
 
+  const componentProps =
+    Component === 'button'
+      ? { type, disabled: isDisabled, ...props }
+      : { ...props };
+
   return (
-    <button
-      type={type}
-      disabled={isDisabled}
-      className={`inline-flex items-center justify-center font-medium transition-all duration-200 cursor-pointer select-none active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 ${sizeStyles[size]} ${variantStyles[variant]} ${className}`}
-      {...props}
+    <Component
+      className={`inline-flex items-center justify-center rounded-full select-none transition-all duration-200 cursor-pointer active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-accent focus-visible:ring-offset-2 focus-visible:ring-offset-bg ${sizeStyles[size] || sizeStyles.md} ${variantStyles[variant] || variantStyles.glass} ${className}`}
+      {...componentProps}
     >
       {isLoading ? (
         <svg
@@ -56,6 +62,7 @@ export default function GlassButton({
           xmlns="http://www.w3.org/2000/svg"
           fill="none"
           viewBox="0 0 24 24"
+          aria-hidden="true"
         >
           <circle
             className="opacity-25"
@@ -74,7 +81,7 @@ export default function GlassButton({
       ) : (
         icon && <span className="inline-flex shrink-0">{icon}</span>
       )}
-      {children}
-    </button>
+      <span>{children}</span>
+    </Component>
   );
 }

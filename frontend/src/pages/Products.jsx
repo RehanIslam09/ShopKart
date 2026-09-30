@@ -1,8 +1,14 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import SearchBar from '../components/SearchBar';
 import ProductCard from '../components/ProductCard';
 import { fetchProducts } from '../services/api';
+import GlassButton from '../components/ui/GlassButton';
 
+/**
+ * Product Catalog Page ("/products")
+ * Displays dynamic product inventory with live search, category filtering,
+ * and price sorting backed by MongoDB.
+ */
 export default function Products() {
   const [products, setProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -62,22 +68,22 @@ export default function Products() {
       {/* Header section */}
       <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 text-left">
         <div>
-          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/[0.05] border border-white/[0.08] text-[11px] text-zinc-400 mb-2">
-            <span>Engineering Lab 03</span>
+          <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-glass/[0.05] border border-glass-border/[0.08] text-[11px] text-muted mb-2">
+            <span>ShopKart Catalog</span>
             <span>•</span>
-            <span className="text-zinc-200">Catalog & Discovery</span>
+            <span className="text-primary font-medium">Hardware & Tools</span>
           </div>
-          <h1 className="text-3xl font-semibold tracking-tight text-white">
-            Explore Products
+          <h1 className="text-3xl font-semibold tracking-tight text-primary">
+            Explore Curated Gear
           </h1>
-          <p className="text-xs text-zinc-400 mt-1">
+          <p className="text-xs text-muted mt-1">
             Real-time querying directly backed by MongoDB and Express REST APIs
           </p>
         </div>
 
         {!loading && !error && (
-          <span className="text-xs text-zinc-400">
-            Showing <strong className="text-white">{products.length}</strong> items
+          <span className="text-xs text-muted">
+            Showing <strong className="text-primary">{products.length}</strong> items
           </span>
         )}
       </div>
@@ -98,15 +104,15 @@ export default function Products() {
           {[1, 2, 3, 4, 5, 6, 7, 8].map((n) => (
             <div
               key={n}
-              className="rounded-3xl bg-white/[0.02] border border-white/[0.06] p-4 space-y-4 animate-pulse"
+              className="rounded-3xl bg-glass/[0.02] border border-glass-border/[0.06] p-4 space-y-4 animate-pulse"
             >
-              <div className="w-full aspect-square rounded-2xl bg-white/[0.05]" />
+              <div className="w-full aspect-square rounded-2xl bg-glass/[0.05]" />
               <div className="space-y-2">
-                <div className="h-4 bg-white/[0.08] rounded-md w-3/4" />
-                <div className="h-3 bg-white/[0.04] rounded-md w-full" />
-                <div className="h-3 bg-white/[0.04] rounded-md w-2/3" />
+                <div className="h-4 bg-glass/[0.08] rounded-md w-3/4" />
+                <div className="h-3 bg-glass/[0.04] rounded-md w-full" />
+                <div className="h-3 bg-glass/[0.04] rounded-md w-2/3" />
               </div>
-              <div className="h-8 bg-white/[0.06] rounded-xl w-full" />
+              <div className="h-8 bg-glass/[0.06] rounded-xl w-full" />
             </div>
           ))}
         </div>
@@ -114,49 +120,49 @@ export default function Products() {
 
       {/* 2. ERROR STATE */}
       {!loading && error && (
-        <div className="p-8 rounded-3xl bg-rose-500/10 border border-rose-500/20 text-center space-y-3">
-          <div className="w-10 h-10 mx-auto rounded-full bg-rose-500/20 flex items-center justify-center text-rose-300">
+        <div className="p-8 rounded-3xl bg-danger/10 border border-danger/20 text-center space-y-3">
+          <div className="w-10 h-10 mx-auto rounded-full bg-danger/20 flex items-center justify-center text-danger">
             ⚠️
           </div>
-          <h3 className="text-sm font-medium text-rose-200">
+          <h3 className="text-sm font-medium text-danger">
             Failed to load products
           </h3>
-          <p className="text-xs text-rose-300/80 max-w-md mx-auto">
+          <p className="text-xs text-danger/80 max-w-md mx-auto">
             {error}
           </p>
-          <button
-            type="button"
+          <GlassButton
+            variant="glass"
+            size="sm"
             onClick={() => setCategory('All')}
-            className="px-4 py-2 rounded-xl bg-rose-500/20 hover:bg-rose-500/30 text-rose-200 text-xs font-medium border border-rose-500/30 transition-all cursor-pointer"
           >
             Retry Request
-          </button>
+          </GlassButton>
         </div>
       )}
 
       {/* 3. EMPTY STATE */}
       {!loading && !error && products.length === 0 && (
-        <div className="p-12 rounded-3xl bg-white/[0.02] border border-white/[0.06] text-center space-y-3">
-          <div className="w-12 h-12 mx-auto rounded-2xl bg-white/[0.05] border border-white/[0.08] flex items-center justify-center text-xl text-zinc-400">
+        <div className="p-12 rounded-3xl bg-glass/[0.02] border border-glass-border/[0.06] text-center space-y-3">
+          <div className="w-12 h-12 mx-auto rounded-2xl bg-glass/[0.05] border border-glass-border/[0.08] flex items-center justify-center text-xl text-muted">
             🔍
           </div>
-          <h3 className="text-base font-medium text-white">
+          <h3 className="text-base font-medium text-primary">
             No products found
           </h3>
-          <p className="text-xs text-zinc-400 max-w-sm mx-auto">
-            We couldn't find any products matching "{search}" in {category}. Try adjusting your keywords or category.
+          <p className="text-xs text-muted max-w-sm mx-auto">
+            We couldn&apos;t find any products matching &quot;{search}&quot; in {category}. Try adjusting your keywords or category.
           </p>
-          <button
-            type="button"
+          <GlassButton
+            variant="primary"
+            size="sm"
             onClick={clearFilters}
-            className="px-4 py-2 rounded-xl bg-white text-zinc-950 font-medium text-xs hover:bg-zinc-200 transition-all cursor-pointer shadow-sm"
           >
             Clear Filters
-          </button>
+          </GlassButton>
         </div>
       )}
 
-      {/* 4. DYNAMIC PRODUCTS GRID (.map) */}
+      {/* 4. DYNAMIC PRODUCTS GRID */}
       {!loading && !error && products.length > 0 && (
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
           {products.map((product) => (

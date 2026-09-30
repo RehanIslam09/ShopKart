@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import WishlistCard from '../components/WishlistCard';
 import { getWishlist, removeFromWishlist } from '../services/api';
@@ -19,7 +19,6 @@ export default function Wishlist({ onWishlistUpdate }) {
       if (onWishlistUpdate) onWishlistUpdate(data.count || (data.wishlist ? data.wishlist.length : 0));
     } catch (err) {
       if (err.status === 401) {
-        // Redirect to login if user session is absent
         navigate('/login');
         return;
       }
@@ -30,8 +29,32 @@ export default function Wishlist({ onWishlistUpdate }) {
   };
 
   useEffect(() => {
-    loadWishlist();
-  }, []);
+    let isMounted = true;
+
+    getWishlist()
+      .then((data) => {
+        if (isMounted) {
+          setWishlist(data.wishlist || []);
+          if (onWishlistUpdate) onWishlistUpdate(data.count || (data.wishlist ? data.wishlist.length : 0));
+        }
+      })
+      .catch((err) => {
+        if (isMounted) {
+          if (err.status === 401) {
+            navigate('/login');
+            return;
+          }
+          setError("We couldn't load your wishlist.");
+        }
+      })
+      .finally(() => {
+        if (isMounted) setLoading(false);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [navigate, onWishlistUpdate]);
 
   const handleRemove = async (productId) => {
     try {
