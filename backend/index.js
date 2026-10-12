@@ -19,17 +19,29 @@ const PORT = process.env.PORT || 5000;
 const allowedOrigins = [
   'http://localhost:5173',
   'http://127.0.0.1:5173',
+  process.env.RENDER_EXTERNAL_URL,
   ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map((u) => u.trim()) : []),
-];
+].filter(Boolean);
 
 app.use(
   cors({
     origin: (origin, callback) => {
-      // Allow requests with no origin (e.g. mobile apps, same-origin static serving) or in whitelist
-      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+      // Allow requests with no origin (e.g. mobile apps, same-origin static requests)
+      if (!origin) return callback(null, true);
+
+      // Whitelisted origins
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+
+      // Automatically allow any Render or Vercel preview/production domains
+      if (origin.endsWith('.onrender.com') || origin.endsWith('.vercel.app')) {
         return callback(null, true);
       }
-      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+
+      // In non-production development environments, allow all origins
+      if (process.env.NODE_ENV !== 'production') return callback(null, true);
+
+      // Disallow without crashing server
+      return callback(null, false);
     },
     credentials: true, // Allow cookies to be sent across origins
   })
