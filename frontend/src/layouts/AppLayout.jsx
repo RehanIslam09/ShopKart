@@ -1,6 +1,6 @@
 import { useRef, useEffect } from 'react';
 import { Link, NavLink, Outlet, useNavigate, useOutletContext } from 'react-router-dom';
-import { ShoppingBag, LogOut, Heart, ShoppingCart, User } from 'lucide-react';
+import { ShoppingBag, LogOut, Heart, ShoppingCart, User, Package } from 'lucide-react';
 import gsap from 'gsap';
 import { logoutCustomer } from '../services/api';
 import { useCart } from '../context/CartContext';
@@ -127,6 +127,10 @@ function AppLayoutContent() {
                 </span>
               )}
             </NavLink>
+            <NavLink to="/orders" className={navLinkStyle}>
+              <Package className="w-3.5 h-3.5" />
+              <span className="hidden sm:inline">Orders</span>
+            </NavLink>
           </div>
 
           {/* User Profile & Logout */}
@@ -194,6 +198,10 @@ function AppLayoutContent() {
           <span>•</span>
           <Link to="/cart" className="hover:text-primary transition-colors">
             Cart
+          </Link>
+          <span>•</span>
+          <Link to="/orders" className="hover:text-primary transition-colors">
+            Orders
           </Link>
         </div>
       </footer>

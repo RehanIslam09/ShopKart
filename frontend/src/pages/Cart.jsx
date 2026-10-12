@@ -1,16 +1,9 @@
-import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import CartItem from '../components/CartItem';
 import { useCart } from '../context/CartContext';
 
 export default function Cart() {
   const { cartItems, loading, error, subtotal, totalItems, refreshCart } = useCart();
-  const [checkoutMsg, setCheckoutMsg] = useState(false);
-
-  const handleCheckout = () => {
-    setCheckoutMsg(true);
-    setTimeout(() => setCheckoutMsg(false), 3000);
-  };
 
   // 1. LOADING STATE (Section 17)
   if (loading) {
@@ -137,20 +130,18 @@ export default function Cart() {
             </div>
 
             {/* Checkout Action Button */}
-            <div className="pt-2 space-y-2">
-              <button
-                type="button"
-                onClick={handleCheckout}
-                className="w-full py-3 rounded-2xl bg-white text-zinc-950 font-semibold text-xs hover:bg-zinc-200 transition-all cursor-pointer shadow-lg shadow-white/10 active:scale-[0.98]"
+            <div className="pt-2">
+              <Link
+                to="/checkout"
+                className={`w-full py-3.5 rounded-full font-semibold text-xs transition-all flex items-center justify-center gap-2 shadow-lg active:scale-[0.98] ${
+                  cartItems.length === 0
+                    ? 'opacity-40 pointer-events-none bg-primary/20 text-muted cursor-not-allowed'
+                    : 'bg-primary text-bg hover:opacity-90 cursor-pointer shadow-primary/10'
+                }`}
               >
-                Proceed to Checkout
-              </button>
-
-              {checkoutMsg && (
-                <div className="p-2.5 rounded-xl bg-indigo-500/15 border border-indigo-500/30 text-indigo-300 text-xs text-center animate-fade-in">
-                  ✓ Order flow ready! (Lab 06 will connect checkout & payments)
-                </div>
-              )}
+                <span>Proceed to Checkout</span>
+                <span>→</span>
+              </Link>
             </div>
 
             <p className="text-[11px] text-zinc-500 text-center leading-relaxed">

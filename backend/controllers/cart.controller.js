@@ -414,4 +414,6 @@ module.exports = {
   getCart,
   updateQuantity,
   removeFromCart,
+  fallbackCarts,
+  SAMPLE_PRODUCTS,
 };

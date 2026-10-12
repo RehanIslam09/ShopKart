@@ -237,3 +237,60 @@ export async function removeFromCart(productId) {
   });
   return handleResponse(res);
 }
+
+/* =========================================================================
+   ORDER & PAYMENT SERVICES (Lab 06)
+   ========================================================================= */
+
+/**
+ * Create a pending ShopKart order and Razorpay order
+ * @param {Object} shippingAddress - { fullName, phone, addressLine1, city, state, pincode }
+ */
+export async function createPaymentOrder(shippingAddress) {
+  const res = await fetch(`${API_BASE}/orders/create-payment-order`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify({ shippingAddress }),
+  });
+  return handleResponse(res);
+}
+
+/**
+ * Verify Razorpay payment signature and confirm ShopKart order
+ * @param {Object} verificationData - { shopKartOrderId, razorpay_order_id, razorpay_payment_id, razorpay_signature }
+ */
+export async function verifyPayment(verificationData) {
+  const res = await fetch(`${API_BASE}/orders/verify-payment`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+    body: JSON.stringify(verificationData),
+  });
+  return handleResponse(res);
+}
+
+/**
+ * Fetch all orders for the authenticated customer
+ */
+export async function getMyOrders() {
+  const res = await fetch(`${API_BASE}/orders`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  return handleResponse(res);
+}
+
+/**
+ * Fetch a single order by its ID (ownership enforced)
+ * @param {string} orderId - Order ObjectId
+ */
+export async function getOrderById(orderId) {
+  const res = await fetch(`${API_BASE}/orders/${orderId}`, {
+    method: 'GET',
+    headers: { 'Content-Type': 'application/json' },
+    credentials: 'include',
+  });
+  return handleResponse(res);
+}

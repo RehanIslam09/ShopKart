@@ -7,6 +7,7 @@ const customerRoutes = require('./routes/customer.routes');
 const productRoutes = require('./routes/product.routes');
 const wishlistRoutes = require('./routes/wishlist.routes');
 const cartRoutes = require('./routes/cart.routes');
+const orderRoutes = require('./routes/order.routes');
 
 const path = require('path');
 const fs = require('fs');
@@ -15,9 +16,21 @@ const app = express();
 const PORT = process.env.PORT || 5000;
 
 // Middleware
+const allowedOrigins = [
+  'http://localhost:5173',
+  'http://127.0.0.1:5173',
+  ...(process.env.CLIENT_URL ? process.env.CLIENT_URL.split(',').map((u) => u.trim()) : []),
+];
+
 app.use(
   cors({
-    origin: ['http://localhost:5173', 'http://127.0.0.1:5173'],
+    origin: (origin, callback) => {
+      // Allow requests with no origin (e.g. mobile apps, same-origin static serving) or in whitelist
+      if (!origin || allowedOrigins.includes(origin) || process.env.NODE_ENV !== 'production') {
+        return callback(null, true);
+      }
+      return callback(new Error(`Origin ${origin} not allowed by CORS`));
+    },
     credentials: true, // Allow cookies to be sent across origins
   })
 );
@@ -29,6 +42,17 @@ app.use('/api/customers', customerRoutes);
 app.use('/api/products', productRoutes);
 app.use('/api/wishlist', wishlistRoutes);
 app.use('/api/cart', cartRoutes);
+app.use('/api/orders', orderRoutes);
+
+// Compatibility aliases for POST order endpoints without /api prefix
+app.post('/orders/create-payment-order', (req, res, next) => {
+  req.url = '/create-payment-order';
+  orderRoutes(req, res, next);
+});
+app.post('/orders/verify-payment', (req, res, next) => {
+  req.url = '/verify-payment';
+  orderRoutes(req, res, next);
+});
 
 // Health check endpoints
 app.get('/api/health', (req, res) => {
